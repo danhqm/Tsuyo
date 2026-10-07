@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+const url=process.env.VITE_SUPABASE_URL,key=process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+if(!url||!key)throw new Error('Run with node --env-file=.env.local scripts/verify-live.mjs');
+const call=async(body,extra={})=>fetch(`${url}/functions/v1/store-api`,{method:'POST',headers:{apikey:key,'Content-Type':'application/json',...extra},body:JSON.stringify(body)});
+const settings=await fetch(`${url}/rest/v1/store_settings?select=currency,checkout_enabled`,{headers:{apikey:key}});
+assert.equal(settings.status,200);const store=(await settings.json())[0];assert.equal(store.currency,'MYR');assert.equal(store.checkout_enabled,false);
+const catalog=await fetch(`${url}/rest/v1/products?select=id`,{headers:{apikey:key}});assert.deepEqual(await catalog.json(),[]);
+const orders=await fetch(`${url}/rest/v1/orders?select=id`,{headers:{apikey:key}});assert.ok([401,403].includes(orders.status));
+assert.equal((await call({action:'admin.overview'})).status,401);
+assert.equal((await call({action:'newsletter',email:'backend-test@example.invalid',consent:false})).status,400);
+assert.equal((await call({action:'quote',items:[]})).status,400);
+assert.ok([409,503].includes((await call({action:'checkout'})).status));
+assert.equal((await call({action:'quote',items:[]},{Origin:'https://invalid.example'})).status,403);
+const webhook=await fetch(`${url}/functions/v1/stripe-webhook`,{method:'POST',body:'{}'});assert.ok([400,503].includes(webhook.status));
+const jobs=await fetch(`${url}/functions/v1/store-jobs`,{method:'POST',body:'{}'});assert.equal(jobs.status,401);
+console.log('Live checks passed: settings/MYR, hidden drafts, private orders, admin denial, validation, disabled payments, CORS, webhook and job protection. No orders, payments or email were created.');

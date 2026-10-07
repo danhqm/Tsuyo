@@ -1,0 +1,14 @@
+{
+  "status": "not_submitted_insufficient_credits",
+  "provider": "Higgsfield",
+  "params": {
+    "model": "seedance_2_5",
+    "mode": "omni_reference",
+    "aspect_ratio": "16:9",
+    "duration": 8,
+    "resolution": "1080p",
+    "generate_audio": false,
+    "medias": [{"role": "start_image", "value": "1f0f0291-5fa7-4057-9108-0731769f621a"}],
+    "prompt": "Animate the supplied TSUYO campaign photograph as a cinematic 8 second monochrome gymwear brand background loop. One continuous shot, no cuts. Preserve the athlete, his oversized washed black t-shirt, the TSUYO chest mark, gym environment and the wide dark negative space on the left. The athletic adult male stands center-right, seen waist-up in three-quarter profile, just finished training. He breathes gently and makes a very subtle natural adjustment to his wrist wrap with anatomically correct hands. Slow restrained camera push-in. Preserve cinematic hard overhead strip light, realistic skin and cotton texture, deep black concrete and steel gym background and cool silver highlights. Fine analogue film grain, high contrast black-and-white throughout. No speech, audio, new writing, brand logos, titles or watermark. First and last poses close for seamless muted looping playback. Premium sports fashion editorial realism."
+  }
+}

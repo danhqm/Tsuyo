@@ -1,0 +1,93 @@
+export const money = (value) => `RM ${value.toFixed(2)}`;
+export const products = [
+  {
+    id: "core-oversized-tee",
+    name: "Core Oversized Tee",
+    color: "Washed Black",
+    colorHex: "#343434",
+    price: 149,
+    category: "men",
+    type: "T-shirts",
+    image: "/assets/core-tee.webp",
+    tag: "CORE COLLECTION",
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    fit: "Oversized fit",
+    description:
+      "A generous silhouette. A quiet statement. The Core Tee brings a dropped shoulder and substantial cotton feel to your everyday rotation.",
+    details: [
+      "Dropped shoulders and a relaxed silhouette",
+      "Soft washed finish",
+      "Understated TSUYO chest print",
+    ],
+    care: "Wash cold with similar colours. Turn inside out, air dry, and avoid ironing the print.",
+  },
+  {
+    id: "training-shorts",
+    name: "Everyday Training Shorts",
+    color: "Onyx",
+    colorHex: "#191919",
+    price: 129,
+    category: "men",
+    type: "Shorts",
+    image: "/assets/training-shorts.webp",
+    tag: "CORE COLLECTION",
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    fit: "Athletic fit · 5-inch inseam",
+    description:
+      "Built for the way you move. A pared-back training short with an adjustable waist and room to get through the hard sets.",
+    details: [
+      "Adjustable drawstring waistband",
+      "Five-inch inseam",
+      "Clean, lightweight training silhouette",
+    ],
+    care: "Machine wash cold with similar colours. Air dry. Do not bleach.",
+  },
+  {
+    id: "pump-cover-tee",
+    name: "Essential Pump Cover",
+    color: "Bone",
+    colorHex: "#d9d6cd",
+    price: 159,
+    category: "men",
+    type: "T-shirts",
+    image: "/assets/pump-cover.webp",
+    tag: "CORE COLLECTION",
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    fit: "Oversized fit",
+    description:
+      "From the first warm-up to the walk home. An easy oversized layer in a soft bone colour, with a substantial feel and minimal branding.",
+    details: [
+      "Roomy dropped shoulder shape",
+      "Bone colour with graphite chest print",
+      "Layer over your everyday training kit",
+    ],
+    care: "Wash cold, inside out, with similar colours. Air dry and avoid ironing the print.",
+  },
+  {
+    id: "form-training-set",
+    name: "Form Training Set",
+    color: "Onyx",
+    colorHex: "#191919",
+    price: 219,
+    category: "women",
+    type: "Sets",
+    image: "/assets/form-set.webp",
+    tag: "CORE COLLECTION",
+    sizes: ["XS", "S", "M", "L", "XL"],
+    fit: "Close fit · two-piece set",
+    description:
+      "A streamlined pair for your daily practice. A racerback top and high-rise legging, designed as one effortless training look.",
+    details: [
+      "Racerback top and high-rise leggings",
+      "Matte, close-fitting finish",
+      "Minimal tonal TSUYO branding",
+    ],
+    care: "Machine wash cold in a laundry bag. Air dry. Do not use fabric softener.",
+  },
+];
+export const campaign = {
+  hero: "/assets/campaign-hero.webp",
+  women: "/assets/campaign-women.webp",
+  mindset: "/assets/mindset.webp",
+  video: null,
+};

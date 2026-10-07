@@ -1,0 +1,1 @@
+Self-hosted Barlow Condensed and Manrope from Google Fonts. Both are licensed under the SIL Open Font License. Sources: https://fonts.google.com/specimen/Barlow+Condensed and https://fonts.google.com/specimen/Manrope

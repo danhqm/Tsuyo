@@ -1,0 +1,62 @@
+[
+  {
+    "index": 0,
+    "job_id": "1f0f0291-5fa7-4057-9108-0731769f621a",
+    "status": "completed",
+    "type": "image",
+    "model": "gpt_image_2_5",
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3KH0NarScpsVGVytaa6mdu3JALn/hf_20261005_115959_1f0f0291-5fa7-4057-9108-0731769f621a.png",
+    "filename": "campaign-hero",
+    "prompt": "Photorealistic luxury gymwear campaign photograph for the independent label TSUYO. Landscape 16:9 composition in a raw industrial weightlifting gym, charcoal concrete walls and metal squat racks, adult athletic male in his late 20s wearing an oversized washed-black gym t-shirt with a very small understated TSUYO chest wordmark and charcoal training shorts, muscular arms with natural realistic skin texture, short hair, facing slightly sideways at the RIGHT THIRD of the frame after a demanding workout. Another athlete small and softly out of focus in background, no other brands. Hard top light and cool silver side light, heavy black shadows, silvery highlights, monochrome black white and graphite palette, editorial 35mm film grain from camera. Atmospheric, strong, gritty, honest premium fitness fashion, quiet confidence. Wide negative space across LEFT HALF, keep that area dark for website copy. No typography overlay, no slogans, no watermarks. Waist-up main subject, show garment and shoulders clearly. Real photography, no CGI, no illustrated aesthetic."
+  },
+  {
+    "index": 1,
+    "job_id": "d0e7e4fb-56b7-4639-899c-671ff0ea94ec",
+    "status": "completed",
+    "type": "image",
+    "model": "gpt_image_2_5",
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3KH0NarScpsVGVytaa6mdu3JALn/hf_20261005_115958_d0e7e4fb-56b7-4639-899c-671ff0ea94ec.png",
+    "filename": "core-tee",
+    "prompt": "Premium e-commerce studio photo for TSUYO gymwear. Single oversized heavyweight washed charcoal cotton t-shirt, front facing, worn by an athletic adult male model cropped from neck to upper thighs, arms relaxed naturally at sides. Tiny off-white TSUYO wordmark on the left chest. Clear entire t-shirt, dropped shoulder silhouette, precise heavyweight fabric texture, no other brands. Seamless light warm-grey background, subtle natural floor shadow, soft directional studio light. Neutral charcoal black palette, clean luxury fitness fashion catalogue, no overlay text or watermark."
+  },
+  {
+    "index": 2,
+    "job_id": "22d96415-e8a8-439f-a39a-3fd9dae64874",
+    "status": "completed",
+    "type": "image",
+    "model": "gpt_image_2_5",
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3KH0NarScpsVGVytaa6mdu3JALn/hf_20261005_115958_22d96415-e8a8-439f-a39a-3fd9dae64874.png",
+    "filename": "training-shorts",
+    "prompt": "Premium e-commerce studio photo for TSUYO gymwear. Single pair black technical training shorts with 5 inch inseam, elasticated drawstring waistband, athletic adult male model cropped from navel to knees, relaxed legs, tiny white TSUYO wordmark low on left leg. Wear a charcoal top barely visible at top edge. Seamless warm light-grey background. Sharp detailed fabric texture, soft directional studio lighting with delicate shadows, clean luxury fitness fashion catalogue, no other brands, no text overlay or watermark."
+  },
+  {
+    "index": 3,
+    "job_id": "17f5de26-7c73-4e86-8b25-cf69d171bde5",
+    "status": "completed",
+    "type": "image",
+    "model": "gpt_image_2_5",
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3KH0NarScpsVGVytaa6mdu3JALn/hf_20261005_115958_17f5de26-7c73-4e86-8b25-cf69d171bde5.png",
+    "filename": "pump-cover",
+    "prompt": "Premium e-commerce studio photo for TSUYO gymwear. Single off-white bone color oversized heavyweight pump-cover t-shirt worn by athletic adult male model cropped from neck to upper thighs, relaxed arms, tiny dark graphite TSUYO wordmark on left chest, dropped shoulder silhouette, precise cotton texture. Seamless warm light-grey background, tonal but enough contrast to show garment boundaries, soft directional studio lighting, clean luxury fitness fashion catalogue, no other brands, no text overlay, no watermark."
+  },
+  {
+    "index": 4,
+    "job_id": "adf8a5bf-3e12-4deb-8851-b4ff77cdae60",
+    "status": "completed",
+    "type": "image",
+    "model": "gpt_image_2_5",
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3KH0NarScpsVGVytaa6mdu3JALn/hf_20261005_115959_adf8a5bf-3e12-4deb-8851-b4ff77cdae60.png",
+    "filename": "form-set",
+    "prompt": "Premium e-commerce studio photo for TSUYO gymwear. Athletic adult woman wearing black racerback performance sports bra and black high-waist seamless leggings, cropped from collarbone to below knees, arms relaxed, natural fit body, tiny grey TSUYO wordmark near bra hem. Seamless warm light-grey background, soft directional studio lighting, matte black stretch texture, clean luxury fitness fashion catalogue, no other brands, no text overlay or watermark."
+  },
+  {
+    "index": 5,
+    "job_id": "ffa665db-4416-4200-a1bd-ef8fd7cb61a5",
+    "status": "completed",
+    "type": "image",
+    "model": "gpt_image_2_5",
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3KH0NarScpsVGVytaa6mdu3JALn/hf_20261005_115959_ffa665db-4416-4200-a1bd-ef8fd7cb61a5.png",
+    "filename": "campaign-women",
+    "prompt": "Photorealistic monochrome fitness fashion editorial photograph for TSUYO. Athletic adult woman with dark hair tied back wearing black sports bra and charcoal high waisted training leggings, standing in a gritty industrial gym after a hard training session, three-quarter view, visible from head to knees, looking slightly away. Black-white silver hard sidelight, deep shadows, raw concrete and steel gym equipment softly behind her, subtle 35mm grain, editorial composition, beautiful strong quiet confidence. No other brands, no text overlay or watermark."
+  }
+]

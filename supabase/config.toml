@@ -1,0 +1,14 @@
+project_id = "Tsuyo"
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/account", "http://localhost:5173/account?mode=recovery", "http://192.168.0.16:5173/account", "http://192.168.0.16:5173/account?mode=recovery"]
+
+[functions.store-api]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.store-jobs]
+verify_jwt = false

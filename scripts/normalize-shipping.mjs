@@ -1,0 +1,10 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';
+const folder='supabase/migrations';const files=await readdir(folder);
+const base=await readFile(`${folder}/${files.find(f=>f.endsWith('_tsuyo_commerce.sql'))}`,'utf8');
+const start=base.indexOf('create function public.store_quote('),end=base.indexOf('create function public.store_create_order(');
+const target=files.find(f=>f.endsWith('_tsuyo_shipping_normalization.sql'));
+if(start<0||end<start||!target)throw new Error('Create the shipping-normalization migration with Supabase CLI first.');
+const original='cardinality(regions) = 0 or p_region = any(regions)';
+let sql=base.slice(start,end).trim();if(!sql.includes(original))throw new Error('Quote definition changed; inspect before generating.');
+sql=sql.replace('create function','create or replace function').replace(original,'cardinality(regions) = 0 or exists(select 1 from unnest(regions) as r(region) where lower(trim(r.region)) = lower(trim(p_region)))');
+await writeFile(`${folder}/${target}`,`-- Normalize regional names while retaining the existing service-only function grants.\n${sql}\n`);

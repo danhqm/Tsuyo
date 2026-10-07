@@ -6,5 +6,6 @@ tmp/
 .npm-cache/
 supabase/.temp/
 supabase/.branches/
+.vercel/
 .env*
 !.env.example

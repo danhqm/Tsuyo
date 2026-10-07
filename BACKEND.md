@@ -2,6 +2,8 @@
 
 The storefront is connected to the Supabase **E-commerce** project (`bhodifcqtkajjojvuqtk`). The schema, image bucket, three Edge Functions, and maintenance schedule are deployed. Prices use MYR in integer minor units.
 
+The production storefront is [tsuyo.vercel.app](https://tsuyo.vercel.app). Supabase Auth uses this as its site URL, with exact account and recovery callbacks. `STORE_URL` and `STORE_ALLOWED_ORIGINS` include the production address; localhost and the existing LAN development origin remain supported.
+
 ## Current store state
 
 - The original four products are drafts with twenty size variants, illustrative prices, and zero stock. The design preview remains visible while the catalog is prepared.
@@ -49,7 +51,7 @@ npm run build
 npm run verify:live
 ```
 
-`.env.local` contains only the project URL and public publishable key. `.env.example` is the portable template. Never put a service key or Stripe secret in a `VITE_` variable.
+The app reads the project URL and public publishable key from `.env.local` in development and Vercel's production environment at build time. Vercel linking may also write a private CLI OIDC token into the ignored `.env.local`; keep that file private and out of deployment uploads. `.env.example` is the portable template. Never put a service key or Stripe secret in a `VITE_` variable.
 
 The project is linked through the authenticated Supabase CLI. Migrations were generated with the CLI, tested, applied to the initially empty database, and recorded in migration history. `supabase/config.toml` intentionally declares only the auth redirects and function auth settings; other remote settings are preserved.
 
@@ -63,7 +65,7 @@ The project is linked through the authenticated Supabase CLI. Migrations were ge
 6. If using Stripe Tax, configure its settings, registrations and product classification. Checkout uses an immutable per-order customer delivery address for tax location. See [Stripe's Checkout tax documentation](https://docs.stripe.com/tax/checkout/page).
 7. Configure production Auth SMTP for customer confirmations/recovery. To deliver queued receipts with Resend, set `RESEND_API_KEY` and a verified `STORE_FROM_EMAIL`. The jobs retry queued messages with an idempotency key. See [Resend's send-email API](https://resend.com/docs/api-reference/emails/send-email).
 8. Publish final delivery/returns, privacy, terms and contact information before sales. Existing preview business policies are placeholders, not finalized commercial policies.
-9. When the frontend is hosted, update `STORE_URL`, `STORE_ALLOWED_ORIGINS`, and the declared auth callback URLs to the real site. Rewrite client routes to `index.html` on the frontend host.
+9. The current Vercel domain and client-route rewrite are configured. If the site moves to a custom domain, update `STORE_URL`, `STORE_ALLOWED_ORIGINS`, and the declared Auth site/callback URLs to that domain.
 10. Enable checkout in store settings. The server requires payment/webhook configuration, an enabled delivery zone and real available inventory.
 
 ## Access and transaction rules

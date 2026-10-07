@@ -1,5 +1,7 @@
 # Tsuyo
 
+Live storefront: **[tsuyo.vercel.app](https://tsuyo.vercel.app)**. Vercel hosts the React application; Supabase hosts its database, authentication and store API. Checkout remains closed while the real catalog, shipping and payment setup are prepared.
+
 The Supabase backend is now deployed to the **E-commerce** project. Customer accounts, catalog/inventory, persistent shopping data, orders, shipping, coupons, protected store management, Stripe integration and maintenance jobs are implemented. Payments remain disabled, delivery rates await configuration, and the catalog remains in draft. See [BACKEND.md](BACKEND.md) for setup, verification and launch steps. The storefront routes are `/account`, `/admin`, and `/checkout`.
 
 A gymwear storefront in MYR, built with React, Vite, GSAP ScrollTrigger, and Lenis. The visual direction draws from the supplied Achilles Heel reference and the images in `references/`: industrial gyms, hard monochrome light, strong condensed type, and restrained vermilion accents. Typography is self-hosted Barlow Condensed and Manrope, with no italics.
@@ -12,6 +14,18 @@ npm run dev
 ```
 
 The preview runs at http://localhost:5173. `npm run build` creates `dist/`, and `npm run preview` serves that build. A deployed host needs to rewrite application routes to `index.html`.
+
+## Deploy
+
+The Vercel project is `tsuyo` in `danhqms-projects`. Production has the public Supabase URL and publishable key configured as `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. `vercel.json` declares the Vite build and application-route rewrite; `.vercelignore` excludes local environment files, caches, references and review captures from uploads.
+
+From an authenticated, linked checkout:
+
+```sh
+vercel deploy --prod --yes --scope danhqms-projects
+```
+
+The current deployment was published through the CLI. GitHub automatic deployments are not connected: Vercel requires its GitHub integration to be installed with access to `danhqm/Tsuyo`. Once that integration is installed, connect the existing repository to the existing `tsuyo` project in Vercel and select `main` as its production branch.
 
 ## Storefront
 

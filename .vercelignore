@@ -1,0 +1,11 @@
+node_modules/
+dist/
+tmp/
+.npm-cache/
+.impeccable/
+references/
+supabase/.temp/
+supabase/.branches/
+.env*
+!.env.example
+*.log

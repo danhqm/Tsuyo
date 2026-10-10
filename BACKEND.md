@@ -7,7 +7,7 @@ The production storefront is [tsuyo.vercel.app](https://tsuyo.vercel.app). Supab
 ## Current store state
 
 - The original four products are drafts with twenty size variants, illustrative prices, and zero stock. The design preview remains visible while the catalog is prepared.
-- Checkout is closed, as requested. Stripe credentials have not been configured and no payments were taken.
+- Checkout is closed. Stripe test credentials and the signed webhook are configured; a real sandbox payment of RM 129 was verified. No real money was charged. See [STRIPE.md](STRIPE.md) for the customer journey and verification scope.
 - Delivery supports Malaysia and international country/region zones. No delivery zone is enabled; fees and free-delivery thresholds await your configuration.
 - A private owner invitation was created for the email you specified. Create and confirm that account, then sign in. The invitation is accepted once against the verified Supabase account and expires after seven days.
 - Transactional messages remain in an outbox until a sender is configured. Marketing campaigns are not sent by this implementation.
@@ -60,8 +60,8 @@ The project is linked through the authenticated Supabase CLI. Migrations were ge
 1. Create and verify your owner account at `/account?mode=signup`. Sign in and open `/admin`.
 2. Replace illustrative descriptions/prices with confirmed merchandise. Mark it as real, activate it, and add stock through the inventory adjustment form.
 3. Configure and enable the delivery zones, fees and optional free-delivery threshold. Use ISO country codes and region names. Region matching ignores capitalization and surrounding spaces.
-4. Configure Stripe test secrets in Supabase Edge Function secrets: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`. Use the deployed endpoint `https://bhodifcqtkajjojvuqtk.supabase.co/functions/v1/stripe-webhook` for `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, and `charge.refunded`.
-5. Test successful, declined, abandoned and duplicate-event payment flows before switching to live Stripe credentials. These paid flows were deliberately not executed during this build.
+4. Stripe sandbox setup is complete. For another environment, configure its secrets in Supabase Edge Function secrets: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`. Use the deployed endpoint `https://bhodifcqtkajjojvuqtk.supabase.co/functions/v1/stripe-webhook` for `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, and `charge.refunded`.
+5. Test successful, declined, abandoned and duplicate-event payment flows before switching to live Stripe credentials. The successful isolated sandbox flow was executed; declined, authentication and normal inventory-backed customer flows still require testing. See STRIPE.md for exact evidence.
 6. If using Stripe Tax, configure its settings, registrations and product classification. Checkout uses an immutable per-order customer delivery address for tax location. See [Stripe's Checkout tax documentation](https://docs.stripe.com/tax/checkout/page).
 7. Configure production Auth SMTP for customer confirmations/recovery. To deliver queued receipts with Resend, set `RESEND_API_KEY` and a verified `STORE_FROM_EMAIL`. The jobs retry queued messages with an idempotency key. See [Resend's send-email API](https://resend.com/docs/api-reference/emails/send-email).
 8. Publish final delivery/returns, privacy, terms and contact information before sales. Existing preview business policies are placeholders, not finalized commercial policies.
@@ -88,8 +88,8 @@ Gateway JWT verification is disabled for these functions because guests, Stripe 
 
 ## Verification evidence and limits
 
-Twelve local tests use an actual portable Postgres runtime for schema/RLS/transaction checks and the Stripe SDK for real signature-verification fixtures. They cover ownership/reassignment, metadata forgery, hidden drafts, client price tampering, quantities, reservations, duplicate payment events, overselling, stock ledger, fulfillment, owner invitation acceptance and regional delivery matching.
+Nineteen local tests use an actual portable Postgres runtime for schema/RLS/transaction checks and the Stripe SDK for real signature-verification fixtures. They cover ownership/reassignment, metadata forgery, hidden drafts, client price tampering, quantities, reservations, duplicate payment events, overselling, stock ledger, fulfillment, owner invitation acceptance and regional delivery matching.
 
 The deployed API was checked for public MYR settings, hidden drafts, inaccessible private orders, admin denial, validation, closed checkout, origin rejection, webhook configuration/signature gating and job authentication. An authenticated maintenance call returned success; scheduled calls returned HTTP 200. Supabase advisors returned no warnings after the fixes.
 
-Browser checks cover the available public account/registration/recovery forms, protected management entry, the bag and closed checkout on desktop/mobile. Owner sign-in, authenticated management operations, live Stripe payments and email delivery still require your account/provider setup; no claim is made that those external flows were exercised. No real orders, payments, email subscriptions or customer test accounts were created in the cloud verification.
+Browser checks cover the available public account/registration/recovery forms, protected management entry, the bag and closed checkout on desktop/mobile. Owner sign-in, authenticated management operations, real Stripe payments and email delivery still require live/provider setup; no claim is made that those external flows were exercised. No real orders, payments, email subscriptions or customer test accounts were created in the cloud verification.

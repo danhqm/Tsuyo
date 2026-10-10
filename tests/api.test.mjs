@@ -15,7 +15,7 @@ test('Stripe parameters use the stored snapshot, configured origin and integer M
   const order={id,email:'test@example.com',shipping_name:'Test delivery',shipping_minor:800,tax_mode:'inclusive',created_at:'2026-10-06T00:00:00Z'};
   const params=checkoutParameters(order,[{name:'Tee',size:'M',color:'Onyx',quantity:2,unit_price_minor:14900}],'https://tsuyo.example');
   assert.equal(params.line_items[0].price_data.unit_amount,14900);assert.equal(params.line_items[0].quantity,2);
-  assert.deepEqual(params.payment_method_types,['card']);assert.equal(params.shipping_options[0].shipping_rate_data.fixed_amount.amount,800);
+  assert.equal(params.payment_method_types,undefined);assert.deepEqual(params.adaptive_pricing,{enabled:false});assert.equal(params.shipping_options[0].shipping_rate_data.fixed_amount.amount,800);
   assert.equal(params.success_url,`https://tsuyo.example/checkout/complete?order=${id}`);
   const customer=billingCustomerParameters({...order,recipient:'Test Customer',shipping_address:{line1:'1 Test Street',city:'Test City',region:'Selangor',country:'MY',postal_code:'50000'}});
   assert.equal(customer.shipping.address.state,'Selangor');assert.equal(customer.shipping.address.country,'MY');
@@ -39,12 +39,34 @@ test('webhook verifies the raw-body signature, ignores unrelated sessions and re
   const stripe=new Stripe('sk_test_local_fixture_only');const secret='whsec_local_fixture_only';let settled=0;
   const commerce={settle:async()=>{settled++;}};
   let handler=makeWebhook({stripe,secret,cryptoProvider:Stripe.createSubtleCryptoProvider(),commerce,db:{}});
-  const payload=JSON.stringify({id:'evt_test',type:'checkout.session.completed',data:{object:{id:'cs_test',metadata:{order_id:id},payment_status:'paid'}}});
+  const payload=JSON.stringify({id:'evt_test',livemode:false,type:'checkout.session.completed',data:{object:{id:'cs_test',metadata:{order_id:id},payment_status:'paid'}}});
   const signed=value=>new Request('https://api.example/stripe-webhook',{method:'POST',headers:{'stripe-signature':stripe.webhooks.generateTestHeaderString({payload:value,secret})},body:value});
   assert.equal((await handler(new Request('https://api.example/stripe-webhook',{method:'POST',body:payload}))).status,400);assert.equal(settled,0);
   assert.equal((await handler(signed(payload))).status,200);assert.equal(settled,1);
   const unrelated=JSON.stringify({id:'evt_other',type:'checkout.session.completed',data:{object:{metadata:{}}}});
   assert.equal((await handler(signed(unrelated))).status,200);assert.equal(settled,1);
+  const strict=makeWebhook({stripe,secret,cryptoProvider:Stripe.createSubtleCryptoProvider(),commerce,db:{},expectedLiveMode:false});
+  const live=payload.replace('"livemode":false','"livemode":true');assert.equal((await strict(signed(live))).status,400);
   handler=makeWebhook({stripe,secret,cryptoProvider:Stripe.createSubtleCryptoProvider(),commerce:{settle:async()=>{throw new Error('Unavailable');}},db:{}});
   assert.equal((await handler(signed(payload))).status,500);
+});
+
+
+test('sandbox admin actions require verified staff before contacting Stripe',async()=>{
+  let calls=0;
+  const commerce=makeCommerce({storeURL:'https://tsuyo.example',publishableKey:'public-key',payments:{connection(){calls++;}},db:{},auth:{}});
+  for(const action of ['admin.payments','admin.test-checkout','admin.test-result']) assert.equal((await commerce.handle(request({action}))).status,401);
+  assert.equal(calls,0);
+});
+
+
+test('incorrect Stripe account is rejected before any stock reservation',async()=>{
+ let writes=0;
+ const commerce=makeCommerce({storeURL:'https://tsuyo.example',publishableKey:'public-key',stripe:{},webhookConfigured:true,payments:{connection:async()=>({connected:false})},db:{rpc(){writes++;}}});
+ assert.equal((await commerce.handle(request({action:'checkout'}))).status,409);assert.equal(writes,0);
+});
+test('payment settlement rejects a live session in a test store before database writes',async()=>{
+ let writes=0;
+ const commerce=makeCommerce({storeURL:'https://tsuyo.example',publishableKey:'public-key',paymentMode:'test',db:{rpc(){writes++;}}});
+ await assert.rejects(commerce.settle({livemode:true,metadata:{order_id:id},payment_status:'paid'},'evt_mode'),/mode does not match/);assert.equal(writes,0);
 });

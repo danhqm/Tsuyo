@@ -9,7 +9,8 @@
     "test": "node --test tests/*.test.mjs",
     "verify:live": "node --env-file=.env.local scripts/verify-live.mjs",
     "preview": "vite preview --host 0.0.0.0",
-    "format": "prettier --write src index.html vite.config.js package.json"
+    "format": "prettier --write src index.html vite.config.js package.json",
+    "verify:stripe": "node --env-file=.env.local scripts/verify-stripe.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",

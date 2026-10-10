@@ -1,3 +1,4 @@
+import { PaymentError } from './payments.mjs';
 export class HttpError extends Error {
   constructor(status,message) { super(message); this.status=status; }
 }
@@ -50,7 +51,7 @@ export function billingCustomerParameters(order) {
 export function checkoutParameters(order,items,storeURL,couponID,customerID) {
   const automaticTax=order.tax_mode==='stripe_tax';
   return {
-    mode:'payment', payment_method_types:['card'], ...(customerID?{customer:customerID}:{customer_email:order.email}),
+    mode:'payment', adaptive_pricing:{enabled:false}, ...(customerID?{customer:customerID}:{customer_email:order.email}),
     client_reference_id:order.id, metadata:{order_id:order.id},
     payment_intent_data:{metadata:{order_id:order.id}},
     line_items:items.map(item=>({quantity:item.quantity,price_data:{currency:'myr',unit_amount:item.unit_price_minor,
@@ -80,7 +81,7 @@ function publicOrder(o) {
     total_minor:o.total_minor,currency:o.currency,payment_status:o.payment_status,fulfillment_status:o.fulfillment_status,
     carrier:o.carrier,tracking_number:o.tracking_number,created_at:o.created_at};
 }
-export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKey,allowedOrigins=[],webhookConfigured=false}) {
+export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKey,allowedOrigins=[],webhookConfigured=false,payments,paymentMode='test'}) {
   const origins=new Set([new URL(storeURL).origin,...allowedOrigins.map(value=>new URL(value).origin)]);
   const headers=origin=>({'Content-Type':'application/json','Access-Control-Allow-Origin':origin||new URL(storeURL).origin,
     'Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info','Access-Control-Allow-Methods':'POST, OPTIONS','Vary':'Origin','Cache-Control':'no-store'});
@@ -126,6 +127,7 @@ export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKe
     return session;
   }
   async function settle(session,eventID) {
+    if(typeof session.livemode==='boolean'&&session.livemode!==(paymentMode==='live')) fail('Payment mode does not match this store.',409);
     const id=uuid(session.metadata?.order_id,'the order');
     if(session.payment_status==='paid'||(session.payment_status==='no_payment_required'&&session.amount_total===0)) {
       const intent=typeof session.payment_intent==='string'?session.payment_intent:session.payment_intent?.id||`free:${session.id}`;
@@ -138,6 +140,15 @@ export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKe
     }
   }
   const actions={
+    async 'sandbox-result'(body) {await limit(`sandbox-result:${body.session_id}`,30,60);return payments.testResult(body.session_id,'maintenance');},
+    async payments() {return {mode:paymentMode,configured:!!stripe&&webhookConfigured};},
+    async 'admin.payments'(_body,req) {await staff(req);return payments.connection();},
+    async 'admin.test-checkout'(body,req) {
+      const actor=await staff(req);await limit(`sandbox:${actor.id}`,10,3600);
+      const variant=await result(db.from('product_variants').select('id,size,price_minor,products(name)').eq('id',uuid(body.variant_id)).single());
+      return payments.testCheckout(variant,actor.id,uuid(body.key));
+    },
+    async 'admin.test-result'(body,req) {const actor=await staff(req);return payments.testResult(body.session_id,actor.id);},
     async quote(body) {
       const items=cart(body.items);
       await limit(`quote:${body.country}:${items.map(x=>x.variant_id).join(',')}`,100,60);
@@ -145,7 +156,9 @@ export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKe
         p_region:text(body.region,'your state or region',120),p_coupon:body.coupon?text(body.coupon,'your promo code',30):null}));
     },
     async checkout(body,req) {
+      if(!webhookConfigured) fail('Online checkout is being set up. Please check back soon.',503);
       if(!stripe) fail('Online checkout is being set up. Please check back soon.',503);
+      if(payments&&!(await payments.connection()).connected) fail('The payment connection is not ready. Please try again later.',409);
       if(typeof body.access_token!=='string'||!/^[0-9a-f]{64}$/i.test(body.access_token)) fail('Start a new checkout request.');
       const account=await user(req); const email=emailAddress(account?.user.email||body.email);
       await limit(`checkout:${account?.user.id||email}`,15,3600);
@@ -233,7 +246,7 @@ export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKe
       await staff(req); const s=body.settings;
       if(!['inclusive','stripe_tax'].includes(s?.tax_mode)) fail('Choose the tax setup.');
       if(s.checkout_enabled){
-        if(!stripe||!webhookConfigured)fail('Connect Stripe and its verified webhook before opening checkout.',409);
+        if(!stripe||!webhookConfigured||payments&&!(await payments.connection()).connected)fail('Connect Stripe and its verified webhook before opening checkout.',409);
         const zones=await result(db.from('shipping_zones').select('id').eq('enabled',true).limit(1));
         const products=await result(db.from('products').select('product_variants(active,stock_on_hand,stock_reserved)').eq('status','active').eq('is_demo',false));
         if(!zones.length||!products.some(p=>p.product_variants.some(v=>v.active&&v.stock_on_hand>v.stock_reserved)))fail('Confirm delivery and real inventory before opening checkout.',409);
@@ -267,8 +280,8 @@ export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKe
         if(!action) fail('This store action is not available.',404);
         return Response.json(await action(body,req),{headers:headers(origin)});
       } catch(error) {
-        return Response.json({error:error instanceof HttpError?error.message:'The store could not complete this request. Please try again.'},
-          {status:error instanceof HttpError?error.status:503,headers:headers(origin)});
+        return Response.json({error:(error instanceof HttpError||error instanceof PaymentError)?error.message:'The store could not complete this request. Please try again.'},
+          {status:(error instanceof HttpError||error instanceof PaymentError)?error.status:503,headers:headers(origin)});
       }
     },
   };

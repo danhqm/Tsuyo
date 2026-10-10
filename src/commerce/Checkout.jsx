@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
   Check,
+  CircleAlert,
+  Clock3,
   ShoppingBag,
 } from "lucide-react";
 import { useCommerce } from "./CommerceProvider";
@@ -34,6 +36,19 @@ function readAttempt(fingerprint) {
 export default function Checkout({ bag, subtotal, getProduct }) {
   const { session, user, settings, zones, checkoutOpen, loading, preview } =
     useCommerce();
+  const [params] = useSearchParams();
+  const [payment, setPayment] = useState(null);
+  useEffect(() => {
+    let active = true;
+    storeRequest("payments")
+      .then((value) => {
+        if (active) setPayment(value);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
   const countries = useMemo(
     () => [...new Set(zones.flatMap((z) => z.countries))].sort(),
     [zones],
@@ -58,28 +73,38 @@ export default function Checkout({ bag, subtotal, getProduct }) {
         );
       return { variant_id: variant.id, quantity: i.quantity };
     });
+  const quoteGeneration = useRef(0);
+  function invalidateQuote() {
+    quoteGeneration.current += 1;
+    setQuote(null);
+  }
   async function calculate(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const generation = ++quoteGeneration.current;
+    setQuote(null);
     setBusy(true);
     setError("");
     try {
-      setQuote(
-        await storeRequest(
-          "quote",
-          { items: pieces(), country, region: form.get("region"), coupon },
-          session,
-        ),
+      const next = await storeRequest(
+        "quote",
+        { items: pieces(), country, region: form.get("region"), coupon },
+        session,
       );
+      if (generation === quoteGeneration.current) setQuote(next);
     } catch (e) {
-      setQuote(null);
-      setError(e.message);
+      if (generation === quoteGeneration.current) {
+        setQuote(null);
+        setError(e.message);
+      }
     } finally {
       setBusy(false);
     }
   }
+  useEffect(() => invalidateQuote(), [JSON.stringify(bag)]);
   async function pay(event) {
     event.preventDefault();
+    if (busy || !quote || !checkoutOpen || !payment?.configured) return;
     const form = event.currentTarget;
     const f = new FormData(form);
     setBusy(true);
@@ -140,7 +165,8 @@ export default function Checkout({ bag, subtotal, getProduct }) {
         </div>
       </main>
     );
-  const closed = !checkoutOpen || preview || !countries.length;
+  const closed =
+    !checkoutOpen || preview || !countries.length || !payment?.configured;
   return (
     <main id="main-content" className="checkout-page section-padding">
       <Link to="/shop" className="back-link">
@@ -162,11 +188,22 @@ export default function Checkout({ bag, subtotal, getProduct }) {
           Review your delivery details, then pay securely with Stripe.
         </p>
       )}
+      {params.get("cancelled") === "1" && (
+        <p className="account-notice" role="status">
+          You returned from Stripe before completing payment. Your bag is still
+          here; review your details and try again when ready.
+        </p>
+      )}
+      {!closed && payment?.mode === "test" && (
+        <p className="account-notice" role="status">
+          Stripe test checkout. Use a test card; no real money is charged.
+        </p>
+      )}
       <div className="checkout-grid">
         <form
           className="commerce-form"
           onSubmit={pay}
-          onChange={() => setQuote(null)}
+          onChange={invalidateQuote}
         >
           <h2>Your details</h2>
           <label>
@@ -355,7 +392,7 @@ export default function Checkout({ bag, subtotal, getProduct }) {
     </main>
   );
 }
-export function OrderConfirmation({ clearBag }) {
+function PurchaseConfirmation({ clearBag }) {
   const [params] = useSearchParams();
   const id = params.get("order");
   const { session } = useCommerce();
@@ -365,6 +402,7 @@ export function OrderConfirmation({ clearBag }) {
     [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
+    let timer;
     setChecking(true);
     setError("");
     let token;
@@ -375,6 +413,11 @@ export function OrderConfirmation({ clearBag }) {
       .then((result) => {
         if (active) {
           setData(result);
+          if (
+            ["pending", "processing"].includes(result.order.payment_status) &&
+            attempt < 12
+          )
+            timer = setTimeout(() => setAttempt((a) => a + 1), 5000);
           if (
             ["paid", "partially_refunded"].includes(result.order.payment_status)
           ) {
@@ -397,18 +440,33 @@ export function OrderConfirmation({ clearBag }) {
       });
     return () => {
       active = false;
+      clearTimeout(timer);
     };
   }, [id, session?.access_token, attempt]);
+  const terminal = ["failed", "expired"].includes(data?.order.payment_status);
   return (
     <main id="main-content" className="checkout-page section-padding">
       <div className="checkout-success">
         <div className="success-icon">
-          <Check size={32} />
+          {["paid", "partially_refunded"].includes(
+            data?.order.payment_status,
+          ) ? (
+            <Check size={32} />
+          ) : ["failed", "expired"].includes(data?.order.payment_status) ||
+            error ? (
+            <CircleAlert size={32} />
+          ) : (
+            <Clock3 size={32} />
+          )}
         </div>
         <h1>
-          {data?.order.payment_status === "paid"
+          {["paid", "partially_refunded"].includes(data?.order.payment_status)
             ? "YOUR NEXT SET. CONFIRMED."
-            : "YOUR ORDER."}
+            : data?.order.payment_status === "expired"
+              ? "CHECKOUT EXPIRED."
+              : data?.order.payment_status === "failed"
+                ? "PAYMENT NOT COMPLETED."
+                : "YOUR ORDER."}
         </h1>
         {checking ? (
           <p role="status">Checking payment status…</p>
@@ -434,8 +492,9 @@ export function OrderConfirmation({ clearBag }) {
                 data.order.payment_status,
               ) && (
                 <p>
-                  We’ll confirm your order once payment is recorded. This page
-                  alone does not confirm payment.
+                  {terminal
+                    ? "Payment was not completed for this order. Your bag is still available; return to checkout to start a new payment."
+                    : "We are waiting for Stripe to confirm payment. This page alone does not confirm payment."}
                 </p>
               )}
             </>
@@ -449,8 +508,93 @@ export function OrderConfirmation({ clearBag }) {
           >
             Refresh status
           </button>
-          <Link to="/shop" className="button button-dark">
-            Keep exploring
+          <Link
+            to={terminal ? "/checkout" : "/shop"}
+            className="button button-dark"
+          >
+            {terminal ? "Return to checkout" : "Keep exploring"}
+            <ArrowUpRight size={17} />
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export function OrderConfirmation({ clearBag }) {
+  const [params] = useSearchParams();
+  return params.has("sandbox") ? (
+    <SandboxConfirmation id={params.get("sandbox")} />
+  ) : (
+    <PurchaseConfirmation clearBag={clearBag} />
+  );
+}
+function SandboxConfirmation({ id }) {
+  const [data, setData] = useState(null),
+    [error, setError] = useState(""),
+    [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let active = true,
+      timer;
+    storeRequest("sandbox-result", { session_id: id })
+      .then((payment) => {
+        if (!active) return;
+        setData(payment);
+        setError("");
+        if (
+          payment.status !== "expired" &&
+          payment.payment_status !== "paid" &&
+          attempt < 12
+        )
+          timer = setTimeout(() => setAttempt((v) => v + 1), 5000);
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [id, attempt]);
+  const paid = data?.payment_status === "paid";
+  return (
+    <main id="main-content" className="checkout-page section-padding">
+      <div className="checkout-success">
+        <div className="success-icon">
+          {paid ? (
+            <Check size={32} />
+          ) : error ? (
+            <CircleAlert size={32} />
+          ) : (
+            <Clock3 size={32} />
+          )}
+        </div>
+        <h1>{paid ? "TEST PAYMENT. CONFIRMED." : "STRIPE PAYMENT TEST."}</h1>
+        <p className="account-notice">
+          Sandbox only. No real charge, order or shipment was created.
+        </p>
+        {error ? (
+          <p role="alert">{error}</p>
+        ) : data ? (
+          <>
+            <p role="status">{data.payment_status.replaceAll("_", " ")}</p>
+            <div className="success-total">
+              <span>Test amount</span>
+              <strong>{money(data.amount_total / 100)}</strong>
+            </div>
+          </>
+        ) : (
+          <p role="status">Checking the test payment…</p>
+        )}
+        <div className="account-actions">
+          <button
+            className="text-link"
+            onClick={() => setAttempt((v) => v + 1)}
+          >
+            Refresh status
+          </button>
+          <Link className="button button-dark" to="/shop">
+            Explore Tsuyo
             <ArrowUpRight size={17} />
           </Link>
         </div>

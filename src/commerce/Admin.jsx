@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import PaymentsPanel from "./PaymentsPanel";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { useCommerce } from "./CommerceProvider";
 import { storeRequest } from "./client";
 import { money } from "../catalog";
 const minor = (value) => Math.round(Number(value) * 100);
-const tabs = ["Products", "Orders", "Delivery", "Promos", "Settings"];
+const tabs = [
+  "Products",
+  "Orders",
+  "Delivery",
+  "Promos",
+  "Payments",
+  "Settings",
+];
 export default function Admin() {
   const {
     session,
@@ -16,7 +24,10 @@ export default function Admin() {
     customerClient,
     reload: reloadCatalog,
   } = useCommerce();
-  const [tab, setTab] = useState("Products"),
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(
+      params.has("payment_test") ? "Payments" : "Products",
+    ),
     [data, setData] = useState(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -726,6 +737,13 @@ export default function Admin() {
               ))}
               <PromoForm key="new" busy={busy} run={run} />
             </>
+          )}
+          {tab === "Payments" && (
+            <PaymentsPanel
+              session={session}
+              products={data.products}
+              testSession={params.get("payment_test")}
+            />
           )}
           {tab === "Settings" && (
             <>

@@ -43,7 +43,7 @@ The current deployment was published through the CLI. GitHub automatic deploymen
 
 The four products, MYR prices, descriptions, and size measurements are illustrative. Prepare the real catalog and inventory in `/admin`; `src/catalog.js` supplies the labelled design preview while the catalog remains in draft. The supplied reference photos are mood references; original third-party garment logos are not used as Tsuyo catalog imagery.
 
-The Supabase data model and management interfaces are connected. Stripe payment credentials and a transactional email sender are not configured; no charges or receipts are sent. Final stock, delivery rates, tax setup and commercial policies must be confirmed before checkout opens.
+The Supabase data model and management interfaces are connected. Stripe is connected to the Tsuyo sandbox, with a verified RM 129 test payment and signed webhook delivery. Real charges remain disabled, and a transactional email sender is not configured. See [STRIPE.md](STRIPE.md) for the complete customer journey and protected sandbox testing. Final stock, delivery rates, tax setup and commercial policies must be confirmed before checkout opens.
 
 ## Media
 
@@ -55,7 +55,7 @@ The requested Seedance 2.5 video could not be submitted because Higgsfield retur
 
 ## Verification
 
-Production build and the original storefront browser checks cover mobile navigation, category filters, sorting, search, required size selection, quick add, wishlist, bag quantities/totals, bag persistence after reload and empty bag recovery. Backend browser checks cover public account/registration/recovery forms, guarded management entry and closed checkout at desktop, mobile and user widths. Desktop/mobile screenshots are saved under `.impeccable/review/` (gitignored). Twelve local database/API tests and deployed negative API checks pass; authenticated management, Stripe payments and email delivery await human/provider setup. See BACKEND.md for the exact scope.
+Production build and the original storefront browser checks cover mobile navigation, category filters, sorting, search, required size selection, quick add, wishlist, bag quantities/totals, bag persistence after reload and empty bag recovery. Backend browser checks cover public account/registration/recovery forms, guarded management entry and closed checkout at desktop, mobile and user widths. Desktop/mobile screenshots are saved under `.impeccable/review/` (gitignored). Nineteen local database/API tests and deployed negative API checks pass; authenticated management, Stripe payments and email delivery await human/provider setup. See BACKEND.md for the exact scope.
 
 The initial Impeccable context and concept launcher attempts could not run in the original sandbox. The backend finish detector subsequently ran through the installed CLI and reported visible advisory typography-ramp differences for the new operating surfaces. Visual review uses actual browser captures and source.
 

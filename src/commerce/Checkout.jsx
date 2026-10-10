@@ -12,6 +12,8 @@ import {
 import { useCommerce } from "./CommerceProvider";
 import { storeRequest } from "./client";
 import { money } from "../catalog";
+import { readAttempt } from "./checkoutAttempt.mjs";
+import SandboxBagCheckout from "./SandboxBagCheckout";
 const countryName = (code) => {
   try {
     return new Intl.DisplayNames(["en"], { type: "region" }).of(code);
@@ -19,36 +21,10 @@ const countryName = (code) => {
     return code;
   }
 };
-function readAttempt(fingerprint) {
-  try {
-    const saved = JSON.parse(sessionStorage.getItem("tsuyo-checkout"));
-    if (saved?.fingerprint === fingerprint) return saved;
-  } catch {}
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return {
-    fingerprint,
-    key: crypto.randomUUID(),
-    access_token: Array.from(bytes, (b) =>
-      b.toString(16).padStart(2, "0"),
-    ).join(""),
-  };
-}
-export default function Checkout({ bag, subtotal, getProduct }) {
+function PurchaseCheckout({ bag, subtotal, getProduct, payment }) {
   const { session, user, settings, zones, checkoutOpen, loading, preview } =
     useCommerce();
   const [params] = useSearchParams();
-  const [payment, setPayment] = useState(null);
-  useEffect(() => {
-    let active = true;
-    storeRequest("payments")
-      .then((value) => {
-        if (active) setPayment(value);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
   const countries = useMemo(
     () => [...new Set(zones.flatMap((z) => z.countries))].sort(),
     [zones],
@@ -524,23 +500,44 @@ function PurchaseConfirmation({ clearBag }) {
 export function OrderConfirmation({ clearBag }) {
   const [params] = useSearchParams();
   return params.has("sandbox") ? (
-    <SandboxConfirmation id={params.get("sandbox")} />
+    <SandboxConfirmation
+      key={params.get("sandbox")}
+      id={params.get("sandbox")}
+      clearBag={clearBag}
+    />
   ) : (
     <PurchaseConfirmation clearBag={clearBag} />
   );
 }
-function SandboxConfirmation({ id }) {
+function SandboxConfirmation({ id, clearBag }) {
   const [data, setData] = useState(null),
     [error, setError] = useState(""),
     [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true,
       timer;
-    storeRequest("sandbox-result", { session_id: id })
+    let token;
+    try {
+      token = sessionStorage.getItem(`tsuyo-sandbox:${id}`);
+    } catch {}
+    storeRequest("sandbox-result", {
+      session_id: id,
+      ...(token ? { access_token: token } : {}),
+    })
       .then((payment) => {
         if (!active) return;
         setData(payment);
         setError("");
+        if (payment.payment_status === "paid" && payment.items?.length) {
+          let current;
+          try {
+            current = JSON.parse(sessionStorage.getItem("tsuyo-checkout"));
+          } catch {}
+          if (current?.session_id === id) {
+            clearBag(payment.items);
+            sessionStorage.removeItem("tsuyo-checkout");
+          }
+        }
         if (
           payment.status !== "expired" &&
           payment.payment_status !== "paid" &&
@@ -557,6 +554,7 @@ function SandboxConfirmation({ id }) {
     };
   }, [id, attempt]);
   const paid = data?.payment_status === "paid";
+  const expired = data?.status === "expired";
   return (
     <main id="main-content" className="checkout-page section-padding">
       <div className="checkout-success">
@@ -569,7 +567,13 @@ function SandboxConfirmation({ id }) {
             <Clock3 size={32} />
           )}
         </div>
-        <h1>{paid ? "TEST PAYMENT. CONFIRMED." : "STRIPE PAYMENT TEST."}</h1>
+        <h1>
+          {paid
+            ? "TEST PAYMENT. CONFIRMED."
+            : expired
+              ? "TEST CHECKOUT EXPIRED."
+              : "STRIPE PAYMENT TEST."}
+        </h1>
         <p className="account-notice">
           Sandbox only. No real charge, order or shipment was created.
         </p>
@@ -577,7 +581,11 @@ function SandboxConfirmation({ id }) {
           <p role="alert">{error}</p>
         ) : data ? (
           <>
-            <p role="status">{data.payment_status.replaceAll("_", " ")}</p>
+            <p role="status">
+              {expired
+                ? "This test checkout expired without completing payment. Your bag is still available; return to checkout to start again."
+                : data.payment_status.replaceAll("_", " ")}
+            </p>
             <div className="success-total">
               <span>Test amount</span>
               <strong>{money(data.amount_total / 100)}</strong>
@@ -593,12 +601,69 @@ function SandboxConfirmation({ id }) {
           >
             Refresh status
           </button>
-          <Link className="button button-dark" to="/shop">
-            Explore Tsuyo
+          <Link
+            className="button button-dark"
+            to={expired ? "/checkout" : "/shop"}
+          >
+            {expired ? "Return to checkout" : "Explore Tsuyo"}
             <ArrowUpRight size={17} />
           </Link>
         </div>
       </div>
     </main>
+  );
+}
+
+export default function Checkout(props) {
+  const { preview, checkoutOpen } = useCommerce();
+  const [payment, setPayment] = useState(null),
+    [failure, setFailure] = useState(""),
+    [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setFailure("");
+    storeRequest("payments")
+      .then((p) => {
+        if (active) setPayment(p);
+      })
+      .catch(() => {
+        if (active)
+          setFailure(
+            "Payment availability could not be checked. Please retry.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [attempt]);
+  const samples = props.bag.every((i) => {
+    const p = props.getProduct(i.id);
+    return p && (p.isDemo || !p.fromDatabase);
+  });
+  if (
+    payment?.sandbox_bag_enabled &&
+    payment.mode === "test" &&
+    preview &&
+    !checkoutOpen &&
+    samples
+  )
+    return <SandboxBagCheckout {...props} />;
+  return (
+    <>
+      {failure && (
+        <div className="section-padding">
+          <p className="account-notice" role="alert">
+            {failure}
+          </p>
+          <button
+            className="text-link"
+            onClick={() => setAttempt((a) => a + 1)}
+          >
+            Retry payment check
+          </button>
+        </div>
+      )}
+      <PurchaseCheckout {...props} payment={payment} />
+    </>
   );
 }

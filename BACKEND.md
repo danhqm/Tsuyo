@@ -7,7 +7,7 @@ The production storefront is [tsuyo.vercel.app](https://tsuyo.vercel.app). Supab
 ## Current store state
 
 - The original four products are drafts with twenty size variants, illustrative prices, and zero stock. The design preview remains visible while the catalog is prepared.
-- Checkout is closed. Stripe test credentials and the signed webhook are configured; a real sandbox payment of RM 129 was verified. No real money was charged. See [STRIPE.md](STRIPE.md) for the customer journey and verification scope.
+- Real checkout is closed; sample shopping bags can use an isolated sandbox flow. Stripe test credentials and the signed webhook are configured; a real sandbox payment of RM 129 was verified. No real money was charged. See [STRIPE.md](STRIPE.md) for the customer journey and verification scope.
 - Delivery supports Malaysia and international country/region zones. No delivery zone is enabled; fees and free-delivery thresholds await your configuration.
 - A private owner invitation was created for the email you specified. Create and confirm that account, then sign in. The invitation is accepted once against the verified Supabase account and expires after seven days.
 - Transactional messages remain in an outbox until a sender is configured. Marketing campaigns are not sent by this implementation.

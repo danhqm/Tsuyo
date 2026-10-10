@@ -81,7 +81,7 @@ function publicOrder(o) {
     total_minor:o.total_minor,currency:o.currency,payment_status:o.payment_status,fulfillment_status:o.fulfillment_status,
     carrier:o.carrier,tracking_number:o.tracking_number,created_at:o.created_at};
 }
-export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKey,allowedOrigins=[],webhookConfigured=false,payments,paymentMode='test'}) {
+export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKey,allowedOrigins=[],webhookConfigured=false,payments,paymentMode='test',sandboxBagEnabled=false}) {
   const origins=new Set([new URL(storeURL).origin,...allowedOrigins.map(value=>new URL(value).origin)]);
   const headers=origin=>({'Content-Type':'application/json','Access-Control-Allow-Origin':origin||new URL(storeURL).origin,
     'Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info','Access-Control-Allow-Methods':'POST, OPTIONS','Vary':'Origin','Cache-Control':'no-store'});
@@ -139,9 +139,37 @@ export function makeCommerce({db,auth,scopedClient,stripe,storeURL,publishableKe
       await result(db.from('orders').update({payment_status:'processing'}).eq('id',id).eq('stripe_session_id',session.id).eq('payment_status','pending'));
     }
   }
+  async function sandboxQuote(value) {
+    if(paymentMode!=='test'||!sandboxBagEnabled||!stripe||!webhookConfigured) fail('Sandbox bag checkout is not available.',409);
+    if(!Array.isArray(value)||!value.length||value.length>30) fail('Your bag must contain 1 to 30 different pieces.');
+    const seen=new Set();
+    const items=value.map(item=>{
+      const product_id=text(item?.product_id,'the sample piece',80),size=text(item?.size,'the size',20);
+      if(!/^[a-z0-9-]+$/.test(product_id)||!Number.isInteger(item.quantity)||item.quantity<1||item.quantity>10||seen.has(`${product_id}:${size}`)) fail('Check the sizes and quantities in your bag.');
+      seen.add(`${product_id}:${size}`);return {product_id,size,quantity:item.quantity};
+    });
+    const rows=await result(db.from('product_variants').select('id,product_id,size,price_minor,products(name,color,is_demo,status)').in('product_id',[...new Set(items.map(i=>i.product_id))]).eq('active',true));
+    const snapshot=items.map(item=>{
+      const v=rows.find(v=>v.product_id===item.product_id&&v.size===item.size);
+      if(!v||v.products?.is_demo!==true||v.products.status==='archived') fail('Sandbox checkout is only available for illustrative sample pieces.',409);
+      if(!Number.isInteger(v.price_minor)||v.price_minor<200) fail('Choose a sample piece priced at RM 2.00 or more.',409);
+      return {...item,variant_id:v.id,name:v.products.name,color:v.products.color,unit_price_minor:v.price_minor};
+    });
+    const total=snapshot.reduce((sum,i)=>sum+i.quantity*i.unit_price_minor,0);
+    return {items:snapshot,subtotal_minor:total,discount_minor:0,shipping_minor:0,total_minor:total,currency:'MYR',sandbox:true};
+  }
   const actions={
-    async 'sandbox-result'(body) {await limit(`sandbox-result:${body.session_id}`,30,60);return payments.testResult(body.session_id,'maintenance');},
-    async payments() {return {mode:paymentMode,configured:!!stripe&&webhookConfigured};},
+    async 'sandbox-quote'(body) {await limit('sandbox-bag:quote',100,60);return sandboxQuote(body.items);},
+    async 'sandbox-checkout'(body,req) {
+      if(paymentMode!=='test'||!sandboxBagEnabled)fail('Sandbox bag checkout is not available.',409);
+      if(typeof body.access_token!=='string'||!/^[0-9a-f]{64}$/i.test(body.access_token))fail('Start a new checkout request.');
+      const email=emailAddress(body.email);await limit('sandbox-bag:create',50,3600);await limit(`sandbox-bag:${email}`,10,3600);
+      const quote=await sandboxQuote(body.items);
+      if(body.expected_total_minor!==quote.total_minor)fail('The test total changed. Refresh it before continuing.',409);
+      return payments.storefrontCheckout(quote.items,uuid(body.key),await hash(body.access_token),email,req.headers.get('origin')||storeURL);
+    },
+    async 'sandbox-result'(body) {await limit(`sandbox-result:${body.session_id}`,30,60);if(body.access_token!==undefined){if(typeof body.access_token!=='string'||!/^[0-9a-f]{64}$/i.test(body.access_token))fail('This sandbox checkout is not available.',404);return payments.testResult(body.session_id,'storefront',await hash(body.access_token));}return payments.testResult(body.session_id,'maintenance');},
+    async payments() {return {mode:paymentMode,configured:!!stripe&&webhookConfigured,sandbox_bag_enabled:paymentMode==='test'&&sandboxBagEnabled&&!!stripe&&webhookConfigured};},
     async 'admin.payments'(_body,req) {await staff(req);return payments.connection();},
     async 'admin.test-checkout'(body,req) {
       const actor=await staff(req);await limit(`sandbox:${actor.id}`,10,3600);

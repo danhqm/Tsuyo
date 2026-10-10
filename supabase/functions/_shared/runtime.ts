@@ -18,7 +18,7 @@ export const stripe=stripeConfig.valid?new Stripe(stripeKey!,{httpClient:Stripe.
 export const cryptoProvider=Stripe.createSubtleCryptoProvider();
 export const storeURL=(Deno.env.get('STORE_URL')||'http://localhost:5173').replace(/\/$/,'');
 export const payments=makePaymentTools({stripe,mode:paymentMode,storeURL,expectedAccount:Deno.env.get('STRIPE_ACCOUNT_ID'),webhookConfigured:!!Deno.env.get('STRIPE_WEBHOOK_SECRET')});
-export const commerce=makeCommerce({db,auth,stripe,storeURL,payments,paymentMode,publishableKey:publicKey,webhookConfigured:!!Deno.env.get('STRIPE_WEBHOOK_SECRET'),allowedOrigins:(Deno.env.get('STORE_ALLOWED_ORIGINS')||'').split(',').map(v=>v.trim()).filter(Boolean),
+export const commerce=makeCommerce({db,auth,stripe,storeURL,payments,paymentMode,sandboxBagEnabled:Deno.env.get('STORE_SANDBOX_BAG_CHECKOUT')==='true',publishableKey:publicKey,webhookConfigured:!!Deno.env.get('STRIPE_WEBHOOK_SECRET'),allowedOrigins:(Deno.env.get('STORE_ALLOWED_ORIGINS')||'').split(',').map(v=>v.trim()).filter(Boolean),
   scopedClient:(token:string)=>createClient(url,publicKey,{...options,global:{headers:{Authorization:`Bearer ${token}`}}})});
 export async function checked<T>(promise:PromiseLike<{data:T,error:unknown}>) {
   const {data,error}=await promise; if(error) throw new Error('Database operation failed.'); return data;

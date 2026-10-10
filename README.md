@@ -1,6 +1,6 @@
 # Tsuyo
 
-Live storefront: **[tsuyo.vercel.app](https://tsuyo.vercel.app)**. Vercel hosts the React application; Supabase hosts its database, authentication and store API. Checkout remains closed while the real catalog, shipping and payment setup are prepared.
+Live storefront: **[tsuyo.vercel.app](https://tsuyo.vercel.app)**. Vercel hosts the React application; Supabase hosts its database, authentication and store API. Real purchases remain closed while catalog and shipping are prepared; sample bags can run a clearly labelled Stripe sandbox checkout.
 
 The Supabase backend is now deployed to the **E-commerce** project. Customer accounts, catalog/inventory, persistent shopping data, orders, shipping, coupons, protected store management, Stripe integration and maintenance jobs are implemented. Real payments remain disabled. Stripe sandbox checkout and signed webhook delivery are verified; delivery rates await configuration and the catalog remains in draft. See [BACKEND.md](BACKEND.md) for setup, verification and launch steps. The storefront routes are `/account`, `/admin`, and `/checkout`. See [STRIPE.md](STRIPE.md) for the customer payment journey and protected sandbox testing.
 

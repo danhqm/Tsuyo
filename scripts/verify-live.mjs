@@ -9,7 +9,7 @@ const orders=await fetch(`${url}/rest/v1/orders?select=id`,{headers:{apikey:key}
 assert.equal((await call({action:'admin.overview'})).status,401);
 assert.equal((await call({action:'newsletter',email:'backend-test@example.invalid',consent:false})).status,400);
 assert.equal((await call({action:'quote',items:[]})).status,400);
-assert.ok([409,503].includes((await call({action:'checkout'})).status));
+assert.ok([409,503].includes((await call({action:'checkout',key:crypto.randomUUID(),access_token:'a'.repeat(64),email:'closed-checkout@example.invalid',recipient:'Test Customer',address:{line1:'1 Test Street',city:'Test City',region:'Selangor',postal_code:'50000',country:'MY'},items:[{variant_id:'20000000-0000-4000-8000-000000000001',quantity:1}]})).status));
 assert.equal((await call({action:'quote',items:[]},{Origin:'https://invalid.example'})).status,403);
 const webhook=await fetch(`${url}/functions/v1/stripe-webhook`,{method:'POST',body:'{}'});assert.ok([400,503].includes(webhook.status));
 const jobs=await fetch(`${url}/functions/v1/store-jobs`,{method:'POST',body:'{}'});assert.equal(jobs.status,401);

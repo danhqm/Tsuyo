@@ -54,3 +54,7 @@ No browser-control tool or current desktop/mobile captures were available for th
 The sidecar's **Dark commerce action** description still says it proceeds through the "local checkout preview," while `PRODUCT.md` and current checkout source describe connected commerce and a separate Stripe sandbox. This stale description predates the public-information extension. It is recorded without repair; no design tokens or incumbent system files are changed.
 
 This check and `.impeccable/agentic-finish-review.md` carry extension evidence and limits. They do not promote task-specific reading rules into a replacement design system.
+
+## Final verification update
+
+The UI and design-system files were not changed after the scored source fixes. Final server packaging/routing and local production-preview checks passed with 45 total tests. Production deployment dpl_C5EXuV7VkrLsXPEYU7pLQaJqNCc2 is promoted; 89 live HTTP/MCP checks passed, with 1,558 visible characters in raw homepage HTML. No browser/desktop/mobile certification is added by these checks. The cached Is Agentic report remains the original 29/100 snapshot pending manual Rescan.

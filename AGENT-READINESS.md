@@ -42,3 +42,9 @@ No current browser-control tooling or desktop/mobile captures were available. Th
 ## Remaining business and external work
 
 The owner supplied public email admin@tsuyo.com, phone 0123456789 and postal code 52780. Organization JSON-LD publishes those exact details, with no invented street/locality. A full postal/returns address, legal entity, final privacy/retention and trading policies, live catalog and delivery configuration still need business decisions. Verify the public mailbox/phone before live trading. Search ranking/indexing, press backlinks and external MCP registry publication need separate external work; no rankings or registry verification are claimed. No new API secrets are required for public reads.
+
+## Deployed verification — 2026-10-11
+
+Production build `dpl_C5EXuV7VkrLsXPEYU7pLQaJqNCc2` (source commit `da4bfc5`) is READY and promoted to https://tsuyo.vercel.app. All 45 automated tests passed, including the 27 existing commerce tests. The live verifier passed 89 checks: raw homepage HTML (1,558 visible characters), HTML/Markdown negotiation and 404s, every public information page/alias, linked assets, OpenAPI, REST reads/errors/CORS, schema-valid discovery, llms/robots/sitemap, and an official MCP client initializing and calling every tool. Live state remains preview/test mode, checkout closed and delivery unconfigured.
+
+Re-running the official Is Agentic CLI returned the same 29/100 snapshot at 2026-10-11T06:57:30.063Z. This is a cached pre-change report, not an updated score. Immediate rescanning requires the report page’s Rescan control; no browser-control tool was available. Vercel runtime logs contained a Node adapter `url.parse()` deprecation warning; tested requests completed with their expected statuses and no invocation failures were observed on this final deployment.

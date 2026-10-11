@@ -625,7 +625,10 @@ test("server rendering honors public shop filters and the explicit root rewrite"
 
 test("production SSR bundles the browser animation dependency for Node interoperability", async () => {
   const bundle = await readFile("dist-server/entry-server.js", "utf8");
-  assert.doesNotMatch(bundle, /from "(?:gsap(?:\/ScrollTrigger)?|react-router-dom|react-router)"/);
+  assert.doesNotMatch(
+    bundle,
+    /from "(?:gsap(?:\/ScrollTrigger)?|react-router-dom|react-router)"/,
+  );
 });
 
 test("production preview serves assets, discovery, negotiated pages and bounded public API", async () => {
@@ -663,4 +666,22 @@ test("production preview serves assets, discovery, negotiated pages and bounded 
       }
     },
   );
+});
+
+test("Vercel API routes do not inject a path capture into public search or page inputs", async () => {
+  const config = JSON.parse(await readFile("vercel.json", "utf8"));
+  for (const path of ["/api/products", "/api/pages", "/api/store"]) {
+    const route = config.rewrites.find((r) => r.source === path);
+    assert.ok(route);
+    assert.equal(route.destination, "/api/public?route=" + path.slice(1));
+  }
+  await withHost(createPublicHandler(load), async (base) => {
+    const search = await fetch(base + "/api/public?route=api/products&q=tee");
+    assert.equal(search.status, 200);
+    const page = await fetch(
+      base + "/api/public?route=api/pages&path=/contact",
+    );
+    assert.equal(page.status, 200);
+    assert.equal((await page.json()).path, "/contact");
+  });
 });

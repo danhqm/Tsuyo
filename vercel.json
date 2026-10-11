@@ -35,12 +35,32 @@
       "destination": "/api/public?route=api"
     },
     {
-      "source": "/api/:path*",
-      "destination": "/api/public?route=api/:path*"
+      "source": "/api/",
+      "destination": "/api/public?route=api/"
     },
     {
-      "source": "/:path*",
-      "destination": "/api/page?route=:path*"
+      "source": "/api/products",
+      "destination": "/api/public?route=api/products"
+    },
+    {
+      "source": "/api/store",
+      "destination": "/api/public?route=api/store"
+    },
+    {
+      "source": "/api/pages",
+      "destination": "/api/public?route=api/pages"
+    },
+    {
+      "source": "/api/products/:id",
+      "destination": "/api/public?route=api/products/:id"
+    },
+    {
+      "source": "/api/:missing*",
+      "destination": "/api/public?route=api/not-found"
+    },
+    {
+      "source": "/:page*",
+      "destination": "/api/page?route=:page*"
     }
   ]
 }

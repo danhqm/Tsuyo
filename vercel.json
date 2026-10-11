@@ -4,5 +4,43 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "functions": {
+    "api/page.mjs": {
+      "includeFiles": "dist-server/**",
+      "maxDuration": 30
+    },
+    "api/mcp.mjs": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/page?route=/"
+    },
+    {
+      "source": "/.well-known/mcp",
+      "destination": "/mcp.json"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/mcp",
+      "destination": "/api/mcp"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/public?route=api"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/public?route=api/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/api/page?route=:path*"
+    }
+  ]
 }

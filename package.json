@@ -5,14 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build": "vite build && vite build --ssr src/entry-server.jsx --outDir dist-server && node scripts/build-public.mjs",
     "test": "node --test tests/*.test.mjs",
     "verify:live": "node --env-file=.env.local scripts/verify-live.mjs",
-    "preview": "vite preview --host 0.0.0.0",
+    "preview": "node --env-file-if-exists=.env.local scripts/preview.mjs",
     "format": "prettier --write src index.html vite.config.js package.json",
-    "verify:stripe": "node --env-file=.env.local scripts/verify-stripe.mjs"
+    "verify:stripe": "node --env-file=.env.local scripts/verify-stripe.mjs",
+    "test:agentic": "node --test tests/agentic.test.mjs",
+    "verify:agentic": "node scripts/verify-agentic.mjs",
+    "pretest": "npm run build",
+    "pretest:agentic": "npm run build"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
     "@supabase/supabase-js": "2.117.2",
     "gsap": "^3.13.0",
     "lenis": "^1.3.8",
@@ -20,11 +25,16 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.0",
-    "stripe": "23.0.0"
+    "stripe": "23.0.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "12.1.0",
     "@electric-sql/pglite": "0.5.8",
     "@vitejs/plugin-react": "^5.0.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "fast-xml-parser": "5.11.2",
     "prettier": "^3.9.9",
     "supabase": "2.119.0",
     "vite": "^7.1.0"

@@ -9,3 +9,4 @@ supabase/.branches/
 .vercel/
 .env*
 !.env.example
+dist-server/

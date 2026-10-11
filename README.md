@@ -13,5 +13,5 @@ npm install
 npm run dev
 ```
 
-The preview runs at http://localhost:5173. `npm run build` creates `dist/`, and `npm run preview` serves that build. A deployed host needs to rewrite application routes to `index.html`.
+The preview runs at http://localhost:5173. `npm run build` creates `dist/` and `dist-server/`; `npm run preview` serves the production pages, API and MCP locally. Vercel uses the included Node handlers and routing configuration. See [AGENT-READINESS.md](AGENT-READINESS.md) for the public API and agent verification.
 

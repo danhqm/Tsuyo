@@ -43,6 +43,8 @@ import { CommerceProvider, useCommerce } from "./commerce/CommerceProvider";
 import { storeRequest } from "./commerce/client";
 const Account = lazy(() => import("./commerce/Account"));
 const Admin = lazy(() => import("./commerce/Admin"));
+import PublicPage, { PublicUnavailable } from "./PublicPage.jsx";
+import { pageMetadata } from "./page-metadata.mjs";
 import ConnectedCheckout, { OrderConfirmation } from "./commerce/Checkout";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -323,29 +325,22 @@ function ScrollManager() {
   useLayoutEffect(() => {
     window.tsuyoLenis?.scrollTo(0, { immediate: true });
     window.scrollTo({ top: 0, behavior: "instant" });
-    const title =
-      location.pathname === "/"
-        ? "Built Through Effort"
-        : location.pathname === "/shop"
-          ? "Shop the Core Collection"
-          : location.pathname.startsWith("/product/")
-            ? getProduct(location.pathname.split("/").pop())?.name || "Product"
-            : location.pathname === "/checkout"
-              ? "Checkout"
-              : location.pathname === "/account"
-                ? "Your Account"
-                : location.pathname === "/admin"
-                  ? "Store Management"
-                  : location.pathname === "/checkout/complete"
-                    ? "Your Order"
-                    : location.pathname.startsWith("/help/")
-                      ? helpContent[location.pathname.split("/").pop()]
-                          ?.title || "Size Guide"
-                      : "The Tsuyo Mindset";
-    document.title = `TSUYO — ${title}`;
     const refresh = requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => cancelAnimationFrame(refresh);
   }, [location.key, location.pathname, location.search]);
+  useEffect(() => {
+    const productName = /^\/product\/[a-z0-9-]+$/.test(location.pathname)
+      ? getProduct(location.pathname.split("/").pop())?.name
+      : undefined;
+    if (location.pathname.startsWith("/product/") && loading && !productName)
+      return;
+    const metadata = pageMetadata(location.pathname, productName);
+    document.title = metadata.title;
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.href = metadata.canonical;
+    const robots = document.querySelector('meta[name="robots"]');
+    if (robots) robots.content = metadata.robots;
+  }, [location.pathname, getProduct, loading]);
   return null;
 }
 
@@ -944,12 +939,14 @@ function Footer() {
           <span>HERE TO HELP</span>
           <Link to="/help/sizing">Size guide</Link>
           <Link to="/help/delivery">Delivery & returns</Link>
-          <Link to="/help/contact">Contact</Link>
+          <Link to="/contact">Contact</Link>
+          <Link to="/docs">API & agent docs</Link>
         </nav>
         <nav aria-label="Footer brand">
           <span>THE PURSUIT</span>
           <Link to="/mindset">Our mindset</Link>
-          <Link to="/help/privacy">Privacy</Link>
+          <Link to="/about">About Tsuyo</Link>
+          <Link to="/privacy">Privacy</Link>
           <Link to="/help/terms">Terms</Link>
         </nav>
       </div>
@@ -1123,9 +1120,12 @@ function SizePicker({ product, value, onChange }) {
             aria-pressed={size === value}
             disabled={
               product.fromDatabase &&
-              product.variants.find((v) => v.size === size)?.stock_on_hand -
-                product.variants.find((v) => v.size === size)?.stock_reserved <=
-                0
+              (product.variants.find((v) => v.size === size)?.available ===
+                false ||
+                product.variants.find((v) => v.size === size)?.stock_on_hand -
+                  product.variants.find((v) => v.size === size)
+                    ?.stock_reserved <=
+                  0)
             }
             className={size === value ? "selected" : ""}
             onClick={() => onChange(size)}
@@ -2050,14 +2050,14 @@ function CatalogStatus() {
     </div>
   ) : null;
 }
-export default function App() {
+export default function App({ initialPublicData, publicError }) {
   return (
-    <CommerceProvider>
-      <Storefront />
+    <CommerceProvider initialPublicData={initialPublicData}>
+      <Storefront publicError={publicError} />
     </CommerceProvider>
   );
 }
-function Storefront() {
+function Storefront({ publicError }) {
   const { user } = useCommerce();
   return (
     <StoreProvider key={user?.id || "guest"}>
@@ -2067,47 +2067,67 @@ function Storefront() {
       </a>
       <Header />
       <CatalogStatus />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/product/:id" element={<ProductPage />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/checkout/complete" element={<CompleteOrder />} />
-        <Route
-          path="/account"
-          element={
-            <Suspense
-              fallback={
-                <main
-                  id="main-content"
-                  className="account-page section-padding"
-                >
-                  <p role="status">Loading your account…</p>
-                </main>
-              }
-            >
-              <Account />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <Suspense
-              fallback={
-                <main id="main-content" className="admin-page section-padding">
-                  <p role="status">Loading store management…</p>
-                </main>
-              }
-            >
-              <Admin />
-            </Suspense>
-          }
-        />
-        <Route path="/mindset" element={<Mindset />} />
-        <Route path="/help/:topic" element={<Help />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      {publicError ? (
+        <PublicUnavailable message={publicError} />
+      ) : (
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/product/:id" element={<ProductPage />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/complete" element={<CompleteOrder />} />
+          <Route
+            path="/account"
+            element={
+              <Suspense
+                fallback={
+                  <main
+                    id="main-content"
+                    className="account-page section-padding"
+                  >
+                    <p role="status">Loading your account…</p>
+                  </main>
+                }
+              >
+                <Account />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <Suspense
+                fallback={
+                  <main
+                    id="main-content"
+                    className="admin-page section-padding"
+                  >
+                    <p role="status">Loading store management…</p>
+                  </main>
+                }
+              >
+                <Admin />
+              </Suspense>
+            }
+          />
+          {[
+            "/about",
+            "/contact",
+            "/privacy",
+            "/docs",
+            "/docs/auth",
+            "/docs/errors",
+            "/developers",
+            "/help/contact",
+            "/help/privacy",
+          ].map((path) => (
+            <Route key={path} path={path} element={<PublicPage />} />
+          ))}
+          <Route path="/mindset" element={<Mindset />} />
+          <Route path="/help/:topic" element={<Help />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      )}
       <Footer />
       <Overlays />
       <ContextCursor />

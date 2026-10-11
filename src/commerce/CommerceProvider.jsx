@@ -10,15 +10,17 @@ import { products as previewProducts } from "../catalog";
 import { configured, supabase, userClient, mapProduct } from "./client";
 const Commerce = createContext(null);
 export const useCommerce = () => useContext(Commerce);
-export function CommerceProvider({ children }) {
+export function CommerceProvider({ children, initialPublicData }) {
   const [session, setSession] = useState(null),
     [authLoading, setAuthLoading] = useState(configured),
     [isStaff, setIsStaff] = useState(false);
   const [roleCheckedToken, setRoleCheckedToken] = useState("");
-  const [catalog, setCatalog] = useState(previewProducts),
-    [settings, setSettings] = useState(null),
-    [zones, setZones] = useState([]);
-  const [loading, setLoading] = useState(configured),
+  const [catalog, setCatalog] = useState(
+      initialPublicData?.products || previewProducts,
+    ),
+    [settings, setSettings] = useState(initialPublicData?.settings || null),
+    [zones, setZones] = useState(initialPublicData?.zones || []);
+  const [loading, setLoading] = useState(configured && !initialPublicData),
     [error, setError] = useState("");
   const customerClient = useMemo(
     () => (configured ? userClient(session) : null),

@@ -2657,3 +2657,12 @@ textarea {
     display: none;
   }
 }
+
+/* Public reading pages inherit the existing help surface. */
+.public-page .help-body { font-size: 14px; line-height: 1.85; color: var(--ink); }
+.public-page h1 { max-width: 1000px; overflow-wrap: anywhere; }
+.public-page h2 { font-size: 32px; margin: 40px 0 18px; font-weight: 600; }
+.public-page pre { padding: 20px; background: var(--ink); color: var(--paper); overflow-x: auto; font-size: 12px; line-height: 1.8; }
+.public-links { display: flex; flex-direction: column; gap: 12px; margin-top: 36px; }
+.public-links a { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 44px; border-bottom: 1px solid var(--line); text-decoration: underline; text-underline-offset: 4px; }
+.public-links a:hover { text-decoration: underline; }

@@ -9,3 +9,5 @@ supabase/.branches/
 .env*
 !.env.example
 *.log
+
+dist-server

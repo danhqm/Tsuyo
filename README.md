@@ -15,3 +15,7 @@ npm run dev
 
 The preview runs at http://localhost:5173. `npm run build` creates `dist/` and `dist-server/`; `npm run preview` serves the production pages, API and MCP locally. Vercel uses the included Node handlers and routing configuration. See [AGENT-READINESS.md](AGENT-READINESS.md) for the public API and agent verification.
 
+
+## Video
+
+https://github.com/user-attachments/assets/e8f96039-900b-4584-85b4-2c1c6734907a
